@@ -79,9 +79,18 @@ def getTable(driver):
     tbody = table[-1].find_all('tbody')
 
     returnArrayRow = []
-    tableHeaders = ["Batter", "Pitcher", "PA", "AB", "H", "2B", "3B", "HR", "SO", "K%",
-                    "Whiff%", "BB", "BB%", "BA", "SLG", "wOBA", "xBA", "xSLG", "xwOBA", "EV", "LA"]
-    returnArrayRow.append(tableHeaders)
+
+    # Parse the table Headers - Ignore Team
+    for thead in table[-1].find_all('thead'):
+        tr = thead.find_all('tr')
+        th = tr[1].find_all('th')
+        tableHeaders = []
+        for headers in th:
+            if headers.text != 'Team':
+                tableHeaders.append(headers.text)
+        returnArrayRow.append(tableHeaders)
+
+    # Parse rows for data
     for tr in tbody[0].find_all('tr'):
         tds = tr.find_all('td')
         returnArrayCol = []
