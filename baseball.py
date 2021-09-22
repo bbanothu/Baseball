@@ -45,17 +45,17 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import TimeoutException
+from datetime import date
+import os
+import csv
 
 
 def configure_driver():
-    # Add additional Options to the webdriver
     chrome_options = Options()
-    # add the argument and make the browser Headless.
     chrome_options.add_argument("--headless")
-    # Instantiate the Webdriver: Mention the executable path of the webdriver you have downloaded
-    # For linux/Mac
-    # driver = webdriver.Chrome(options = chrome_options)
-    # For windows
+    # For Mac - Uncomment
+    # driver = webdriver.Chrome(options=chrome_options)
+    # For Windows - Uncomment
     driver = webdriver.Chrome(
         executable_path="./chromedriver.exe", options=chrome_options)
     return driver
@@ -74,38 +74,46 @@ def getTable(driver):
         return None
 
     # Step 2: Create a parse tree of page sources after searching
-    soup = BeautifulSoup(driver.page_source, "lxml")
-    # Step 3: Iterate over the search result and fetch the course
-    course_page = soup.select("div.table-savant")
-    table = soup.select("div.table-savant > table")
-    tableHeader = soup.select(
-        "div.table-savant > table > thead > tr")
-    # print(table)
-    print(tableHeader)
+    soup = BeautifulSoup(driver.page_source, "html.parser")
+    table = soup.find_all('table')
+    tbody = table[-1].find_all('tbody')
 
-    rows = tableHeader.find_all('th')
+    returnArrayRow = []
+    tableHeaders = ["Batter", "Pitcher", "PA", "AB", "H", "2B", "3B", "HR", "SO", "K%",
+                    "Whiff%", "BB", "BB%", "BA", "SLG", "wOBA", "xBA", "xSLG", "xwOBA", "EV", "LA"]
+    returnArrayRow.append(tableHeaders)
+    for tr in tbody[0].find_all('tr'):
+        tds = tr.find_all('td')
+        returnArrayCol = []
+        for span in tds:
+            current_val = span.find_all('span')
+            if current_val:
+                if current_val[0].text != '':
+                    returnArrayCol.append(current_val[0].text)
+        returnArrayRow.append(returnArrayCol)
 
-    for row in rows:
-        print(row)
-        # data = row.find_all('th')
+    return returnArrayRow
 
-        # if (len(data) > 0):
-        #     cell = data[0]
-        #     print(cell.text)
 
-    # headers = []
-    # for i in tableHeader.find('th'):
-    #     title = i.text.strip()
-    #     headers.append(title)
-
-    # print(headers)
-    return course_page
+def writeToCsv(data):
+    # Get date for file name
+    today = date.today()
+    fileName = today.strftime("%m_%d_%Y")
+    # Create file to store - has blank lines
+    with open("init_file.csv", 'w', newline='') as my_csv:
+        csvWriter = csv.writer(my_csv, delimiter=',')
+        csvWriter.writerows(data)
+    # Remove blank lines and write to actual file
+    with open("init_file.csv", 'r') as inp, open(f"./output_files/{fileName}.csv", 'w') as out:
+        for line in inp:
+            if line.strip():
+                out.write(line)
+    # Delete Temp File
+    os.remove("init_file.csv")
 
 
 # create the driver object.
 driver = configure_driver()
-# run script
-tableHtml = getTable(driver)
-# print(tableHtml)
-# close the driver.
+data = getTable(driver)
+writeToCsv(data)
 driver.close()
