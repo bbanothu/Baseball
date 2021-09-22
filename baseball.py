@@ -77,6 +77,28 @@ def getTable(driver):
     soup = BeautifulSoup(driver.page_source, "lxml")
     # Step 3: Iterate over the search result and fetch the course
     course_page = soup.select("div.table-savant")
+    table = soup.select("div.table-savant > table")
+    tableHeader = soup.select(
+        "div.table-savant > table > thead > tr")
+    # print(table)
+    print(tableHeader)
+
+    rows = tableHeader.find_all('th')
+
+    for row in rows:
+        print(row)
+        # data = row.find_all('th')
+
+        # if (len(data) > 0):
+        #     cell = data[0]
+        #     print(cell.text)
+
+    # headers = []
+    # for i in tableHeader.find('th'):
+    #     title = i.text.strip()
+    #     headers.append(title)
+
+    # print(headers)
     return course_page
 
 
@@ -84,6 +106,6 @@ def getTable(driver):
 driver = configure_driver()
 # run script
 tableHtml = getTable(driver)
-print(tableHtml)
+# print(tableHtml)
 # close the driver.
 driver.close()
